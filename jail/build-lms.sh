@@ -5,9 +5,10 @@ export ASSUME_ALWAYS_YES=YES
 
 URL=$(curl -s 'http://www.mysqueezebox.com/update/?version=7.9.0&revision=1&geturl=1&os=readynas' | sed -e 's/-sparc-readynas.bin$/-FreeBSD.tgz/')
 TGZ=$(basename $URL)
-DIR=$(basename $TGZ .tgz)
+LMS=$(basename $TGZ .tgz)
+DIR=/tmp/LMS
 
-# Install needed packages
+# Install required packages
 pkg update
 pkg upgrade
 pkg install bash
@@ -19,8 +20,8 @@ pkg install libgd
 pkg install gcc
 
 # Download LMS nightly build
-mkdir /tmp/LMS
-cd /tmp/LMS
+mkdir $DIR
+cd $DIR
 wget $URL
 
 if [ ! -f $TGZ ]; then
@@ -30,8 +31,8 @@ fi
 
 tar xf $TGZ
 
-if [ ! -d $DIR ]; then
-  echo 'Downloaded $TGZ did not contain $DIR directory!'
+if [ ! -d $LMS ]; then
+  echo 'Downloaded $TGZ did not contain $LMS directory!'
   exit 1
 fi
 
@@ -40,10 +41,10 @@ fi
 git clone https://github.com/Logitech/slimserver-vendor -b public/7.9
 ln -s -f /usr/local/bin/perl5.24.1 /usr/bin/perl
 ln -s -f /usr/local/bin/perl5.24.1 /usr/bin/perl5
-cd /tmp/LMS/slimserver-vendor/CPAN
-./buildme.sh | tee /tmp/LMS/buildme.sh.log
-cd /tmp/LMS/$DIR/CPAN/arch/5.24
-cp -Rp /tmp/LMS/slimserver-vendor/CPAN/build/arch/5.24/amd64-freebsd-thread-multi .
+cd $DIR/slimserver-vendor/CPAN
+./buildme.sh | tee $DIR/buildme.sh.log
+cd $DIR/$LMS/CPAN/arch/5.24
+cp -Rp $DIR/slimserver-vendor/CPAN/build/arch/5.24/amd64-freebsd-thread-multi .
 cd ..
 rm -rf 5.8
 rm -rf 5.10
@@ -53,7 +54,7 @@ rm -rf 5.16
 rm -rf 5.18
 rm -rf 5.20
 rm -rf 5.22
-cd /tmp/LMS
-tar cf $DIR $DIR.tar
+cd $DIR
+tar cf $LMS.tar $LMS
 
-echo 'Building complete! The result is in $DIR.tar'
+echo "Building complete! The result is in $DIR/$LMS.tar"
